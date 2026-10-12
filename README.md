@@ -1,118 +1,60 @@
-# 🎮 CHOR-SIPAHI — Real-Time Multiplayer Gaming Platform
+# CHOR-SIPAHI
 
-A modern digital adaptation of the traditional Indian Chor-Sipahi game, built to bring friends together through real-time multiplayer gameplay.
+A real-time multiplayer digital version of the traditional Chor-Sipahi game, designed for friends to create private rooms, assign secret roles, and compete in fast, social rounds.
 
-## 📌 About the Project
+## About the project
 
-CHOR-SIPAHI is a full-stack web application where players can create private game rooms, invite friends using a unique room code, receive secret roles, and compete in an interactive multiplayer game.
+CHOR-SIPAHI is a full-stack web application built with React, Node.js, Express, Socket.IO, and MongoDB. Players can register, create or join game rooms, wait in a lobby, receive secret roles, and compete to identify the hidden Chor before the timer runs out.
 
-The platform combines traditional gameplay with modern web technologies, secure authentication, real-time communication, and a responsive user interface.
+## Features
 
-## ✨ Features
+- Professional landing page
+- User authentication and secure JWT-based sessions
+- Private room creation and invite-by-code gameplay
+- Real-time multiplayer communication with Socket.IO
+- Secret role assignment and server-side validation
+- Live scoring and leaderboard updates
+- Game history and player statistics
+- Responsive design for desktop and mobile
 
-- **Landing Page:** Professional introduction to the game and its features.
-- **User Authentication:** Registration, login, JWT authentication, and password hashing.
-- **Responsive UI:** Designed for mobile phones, tablets, laptops, and desktops.
-- **Private Game Rooms:** Create and join rooms using unique game codes.
-- **Real-Time Multiplayer:** Live player updates using Socket.IO.
-- **Secret Role Assignment:** Server-side random role assignment.
-- **Interactive Gameplay:** Sipahi attempts to identify the Chor.
-- **Game Timer:** Server-controlled countdown for each round.
-- **Automatic Scoring:** Scores calculated by the backend.
-- **Leaderboard:** Compare player points and performance.
-- **Game History:** Review previous games and results.
-- **Player Profile:** Track games played, wins, and total points.
+## Tech stack
 
-## 🛠️ Technology Stack
+- React.js
+- Vite
+- Node.js
+- Express.js
+- MongoDB + Mongoose
+- Socket.IO
+- JWT + bcrypt
 
-| Technology | Purpose |
-|---|---|
-| React.js | Frontend user interface |
-| Tailwind CSS | Responsive styling |
-| Node.js | Backend runtime |
-| Express.js | REST API development |
-| MongoDB | NoSQL database |
-| Mongoose | MongoDB object modeling |
-| Socket.IO | Real-time multiplayer communication |
-| JWT | Authentication |
-| bcrypt | Password hashing |
-| Git & GitHub | Version control |
+## How it works
 
-## 🎭 Game Roles
-
-- **Raja:** The highest-scoring role.
-- **Sipahi:** Attempts to identify the Chor.
-- **Chor:** Attempts to avoid identification.
-- **Other:** Participates in the round.
-
-Each four-player round contains one of each role. The backend manages role assignment and scoring.
-
-## 🔄 How It Works
-
-1. Register a new account or log in.
+1. Sign up or log in.
 2. Create a private room or join one using a game code.
 3. Wait for four players to join the lobby.
-4. Start the game and receive a secret role.
-5. The Sipahi selects the player suspected of being the Chor.
-6. The server calculates the result and updates scores.
-7. View the result, leaderboard, and game history.
+4. Each player receives a secret role.
+5. The Sipahi tries to identify the Chor.
+6. Results and scores are calculated server-side.
+7. View your leaderboard and match history.
 
-## 🏗️ Architecture
-
-```text
-React.js Frontend
-       |
-       | REST API
-       v
-Node.js + Express.js
-       |
-       ├── JWT Authentication
-       ├── Game Logic
-       ├── Scoring Engine
-       └── Socket.IO
-              |
-              v
-          MongoDB
-```
-
-## 🗄️ Database Design
-
-The application uses MongoDB collections to manage:
-
-- `users` — User accounts and player statistics
-- `games` — Game rooms, participants, and game status
-- `gameHistory` — Completed games, roles, results, and points
-
-## 🚀 Getting Started
+## Run locally
 
 ### Prerequisites
 
 - Node.js and npm
-- MongoDB Atlas account or local MongoDB
+- MongoDB running locally or MongoDB Atlas
 - Git
 
-### Installation
-
-Clone the repository:
+### 1) Install dependencies
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/chor-sipahi-multiplayer-game.git
-cd chor-sipahi-multiplayer-game
+cd client && npm install
+cd ../server && npm install
 ```
 
-Install the frontend and backend dependencies:
+### 2) Set environment variables
 
-```bash
-cd client
-npm install
-
-cd ../server
-npm install
-```
-
-### Environment Variables
-
-Create a `.env` file in the backend directory:
+Create a `.env` file in `server/`:
 
 ```env
 PORT=5000
@@ -121,58 +63,52 @@ JWT_SECRET=your_secure_secret
 CLIENT_URL=http://localhost:5173
 ```
 
-Never commit your real `.env` file or expose database credentials.
+### 3) Start the app
 
-### Run the Application
-
-Start the backend using the script configured in your `server/package.json`, for example:
+In one terminal:
 
 ```bash
+cd server
 npm run dev
 ```
 
-In another terminal, start the frontend:
+In another terminal:
 
 ```bash
 cd client
 npm run dev
 ```
 
-Open the local frontend URL displayed in your terminal.
+The client runs at `http://localhost:5173` and the API runs on port `5000`.
 
-## 🔐 Security
+## Data model
+
+- `users` stores authentication data and player statistics
+- `games` stores room state, role assignment, timer, and results
+- `gameHistory` tracks completed matches
+
+## Security notes
 
 - Password hashing with bcrypt
-- JWT-protected API routes
-- Server-side authorization
-- Server-controlled role assignment and scoring
-- Input validation and error handling
-- Environment variables for sensitive configuration
+- JWT-protected routes
+- Server-side validation for game rules, scoring, and role assignment
+- Sensitive config stored in environment variables
 
-## 📱 Responsive Design
+## Production notes
 
-The interface is designed to adapt to mobile, tablet, and desktop screens, including the landing page, authentication forms, game lobby, gameplay, leaderboard, and profile pages.
+For a production deployment, use MongoDB Atlas or a replicated MongoDB setup, configure secure environment variables, and run Socket.IO behind a multi-instance-ready architecture with Redis if scaling horizontally.
 
-## 🔮 Future Enhancements
+## Future scope
 
 - Public matchmaking
-- In-game chat and voice communication
-- Player achievements and ranking tiers
+- In-game chat
+- Achievements and rankings
 - Tournament mode
 - Spectator mode
-- AI opponents
-- Progressive Web App (PWA)
+- AI players
 
-## 🎓 Learning Outcomes
+## Author
 
-This project demonstrates full-stack web development, NoSQL database modeling, authentication, REST API design, real-time event handling, responsive UI development, and server-side game logic.
+Dhiraj Kumar
 
-## 👨‍💻 Author
-
-**Your Name**
-
-- GitHub: https://github.com/YOUR_USERNAME
-
-## 📄 License
-
-This project can be distributed under the MIT License if an MIT `LICENSE` file is added to the repository.
+GitHub: https://github.com/dhirajkumar62
