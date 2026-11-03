@@ -104,10 +104,10 @@ export default function Lobby() {
         <p className="lobby-subtitle">Everyone in the room will appear here.</p>
         {error && <p className="error" role="alert">{error}</p>}
         <div className="lobby-players">{game.players.map((player) => <div className="player lobby-player" key={player.userId}>
-          <span className="lobby-player-name"><span className="lobby-avatar" aria-hidden="true">{player.name?.trim()?.charAt(0)?.toUpperCase() || '?'}</span><span>{player.name}{String(player.userId) === String(game.hostId) && <small className="host-tag">Host</small>}</span></span>
+          <span className="lobby-player-name"><span className="lobby-avatar" aria-hidden="true">{player.name?.trim()?.charAt(0)?.toUpperCase() || '?'}</span><span className="lobby-player-label"><span className="lobby-name-text">{player.name}</span>{String(player.userId) === String(game.hostId) && <small className="host-tag">Host</small>}</span></span>
           <span className={player.connected ? 'connection-status connected' : 'connection-status'}><i aria-hidden="true" />{player.connected ? 'Connected' : 'Reconnecting'}</span>
         </div>)}
-        {Array.from({ length: Math.max(0, game.settings.maxPlayers - game.players.length) }, (_, index) => <div className="lobby-player lobby-empty-slot" key={`open-${index}`}><span className="lobby-player-name"><span className="lobby-avatar" aria-hidden="true">＋</span><span>Open seat<small>Invite a friend to join</small></span></span><span className="seat-status">Waiting</span></div>)}</div>
+        {Array.from({ length: Math.max(0, game.settings.maxPlayers - game.players.length) }, (_, index) => <div className="lobby-player lobby-empty-slot" key={`open-${index}`}><span className="lobby-player-name"><span className="lobby-avatar" aria-hidden="true">＋</span><span className="lobby-player-label"><span className="lobby-name-text">Open seat</span><small className="lobby-seat-description">Invite a friend to join</small></span></span><span className="seat-status">Waiting</span></div>)}</div>
         <div className="lobby-readiness" role="status">
           {game.players.length < game.settings.maxPlayers
             ? `Waiting for players (${game.players.length}/${game.settings.maxPlayers} joined).`
