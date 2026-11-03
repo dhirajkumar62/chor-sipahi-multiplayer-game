@@ -88,16 +88,26 @@ export default function Lobby() {
   const readyToStart = game.players.length === game.settings.maxPlayers && connectedCount === game.settings.maxPlayers;
 
   return <Layout>
-    <div className="card center"><p className="muted">PRIVATE ROOM CODE</p><div className="code">{gameCode}</div><button className="secondary" onClick={copy}>{copied ? 'Copied!' : 'Copy game code'}</button><p className="muted">Share this code with your friends</p></div>
-    <div className="spacer" />
+    <main className="lobby-page">
+    <section className="card center lobby-invite" aria-labelledby="invite-title">
+      <p className="eyebrow" id="invite-title">Your private room</p>
+      <div className="code" aria-label={`Room code ${gameCode}`}>{gameCode}</div>
+      <button className="secondary lobby-copy" onClick={copy}>{copied ? 'Copied to clipboard' : 'Copy invite code'}</button>
+      <p className="muted lobby-invite-note">Send this code to your friends to invite them</p>
+    </section>
     <div className="lobby-layout">
-      <section className="card">
-        <h1 className="title">Lobby · {game.players.length}/{game.settings.maxPlayers} players</h1>
+      <section className="card lobby-roster" aria-labelledby="lobby-title">
+        <header className="lobby-section-heading">
+          <div><p className="eyebrow">Game room</p><h1 className="title" id="lobby-title">Players</h1></div>
+          <span className="lobby-count">{game.players.length}<span> / {game.settings.maxPlayers}</span></span>
+        </header>
+        <p className="lobby-subtitle">Everyone in the room will appear here.</p>
         {error && <p className="error" role="alert">{error}</p>}
-        {game.players.map((player) => <div className="player" key={player.userId}>
-          <span>👤 {player.name} {String(player.userId) === String(game.hostId) ? ' · Host' : ''}</span>
-          <span className={player.connected ? 'connection-status connected' : 'connection-status'}>{player.connected ? '● Connected' : '○ Reconnecting'}</span>
+        <div className="lobby-players">{game.players.map((player) => <div className="player lobby-player" key={player.userId}>
+          <span className="lobby-player-name"><span className="lobby-avatar" aria-hidden="true">{player.name?.trim()?.charAt(0)?.toUpperCase() || '?'}</span><span>{player.name}{String(player.userId) === String(game.hostId) && <small className="host-tag">Host</small>}</span></span>
+          <span className={player.connected ? 'connection-status connected' : 'connection-status'}><i aria-hidden="true" />{player.connected ? 'Connected' : 'Reconnecting'}</span>
         </div>)}
+        {Array.from({ length: Math.max(0, game.settings.maxPlayers - game.players.length) }, (_, index) => <div className="lobby-player lobby-empty-slot" key={`open-${index}`}><span className="lobby-player-name"><span className="lobby-avatar" aria-hidden="true">＋</span><span>Open seat<small>Invite a friend to join</small></span></span><span className="seat-status">Waiting</span></div>)}</div>
         <div className="lobby-readiness" role="status">
           {game.players.length < game.settings.maxPlayers
             ? `Waiting for players (${game.players.length}/${game.settings.maxPlayers} joined).`
@@ -109,5 +119,6 @@ export default function Lobby() {
       </section>
       <ChatPanel socket={connectSocket()} gameCode={gameCode} messages={messages} userId={me?._id} />
     </div>
+    </main>
   </Layout>;
 }
