@@ -55,5 +55,11 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 if (!process.env.JWT_SECRET) console.warn('WARNING: set JWT_SECRET in server/.env before production use');
-connectDB(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/chor_sipahi');
-server.listen(PORT, () => console.log(`Server running on port ${PORT}; allowed client origins: ${allowedOrigins.join(', ')}`));
+connectDB(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/chor_sipahi')
+  .then(() => {
+    server.listen(PORT, () => console.log(`Server running on port ${PORT}; allowed client origins: ${allowedOrigins.join(', ')}`));
+  })
+  .catch((err) => {
+    console.error('Server startup failed:', err);
+    process.exit(1);
+  });
