@@ -28,7 +28,7 @@ export default function Dashboard() {
   const otherResults = Math.max(played - won, 0);
   const winRate = played ? Math.round((won / played) * 100) : 0;
   const joinedAt = user.createdAt ? new Date(user.createdAt) : null;
-  const roles = ['RAJA', 'SIPAHI', 'CHOR', 'OTHER'];
+  const roles = ['RAJA', 'MANTRI', 'SIPAHI', 'CHOR'];
   const maxRoleCount = Math.max(...roles.map((role) => roleCounts[role] || 0), 1);
   const topRole = Object.entries(roleCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
   const recentGames = history.slice(0, 3);

@@ -7,9 +7,9 @@ import { useAuth } from '../context/AuthContext';
 
 const roles = [
   ['♛', 'RAJA', 'Highest-value role'],
+  ['✦', 'MANTRI', 'Leads the suspicion'],
   ['⚔', 'SIPAHI', 'Must identify the Chor'],
   ['◈', 'CHOR', 'Must avoid being identified'],
-  ['◉', 'OTHER', 'Participates in the round'],
 ];
 
 const features = [

@@ -1,12 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+const EMOJIS = ['😀', '😂', '❤️', '🔥', '👍', '👎', '😎', '🎮', '👑', '😭', '🎉', '🤝'];
+
 export default function ChatPanel({ socket, gameCode, messages, userId }) {
   const [draft, setDraft] = useState('');
   const [error, setError] = useState('');
   const [connected, setConnected] = useState(socket.connected);
   const [open, setOpen] = useState(false);
   const [typingUsers, setTypingUsers] = useState([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const listRef = useRef(null);
+  const pickerRef = useRef(null);
   const typingRef = useRef(false);
   const lastTypingEmitRef = useRef(0);
   const typingTimerRef = useRef(null);
@@ -65,6 +69,14 @@ export default function ChatPanel({ socket, gameCode, messages, userId }) {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages, open, typingUsers]);
 
+  useEffect(() => {
+    const onPointerDown = (event) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target)) setPickerOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, []);
+
   const updateDraft = (value) => {
     setDraft(value);
     if (!value.trim()) {
@@ -92,6 +104,11 @@ export default function ChatPanel({ socket, gameCode, messages, userId }) {
       if (result?.error) setError(result.error);
       else { setError(''); setDraft(''); }
     });
+  };
+
+  const insertEmoji = (emoji) => {
+    setDraft((current) => `${current}${emoji}`);
+    setPickerOpen(false);
   };
 
   const typingLabel = typingUsers.length === 1
@@ -124,6 +141,16 @@ export default function ChatPanel({ socket, gameCode, messages, userId }) {
       <form className="chat-form" onSubmit={send}>
         <label className="sr-only" htmlFor={`room-chat-input-${gameCode}`}>Type your message</label>
         <input id={`room-chat-input-${gameCode}`} maxLength={500} value={draft} onChange={(event) => updateDraft(event.target.value)} placeholder="Type your message…" />
+        <div className="emoji-wrapper" ref={pickerRef}>
+          <button type="button" className="emoji-button" aria-label="Open emoji picker" onClick={() => setPickerOpen((value) => !value)}>😊</button>
+          {pickerOpen && (
+            <div className="emoji-picker" role="dialog" aria-label="Emoji picker">
+              {EMOJIS.map((emoji) => (
+                <button type="button" key={emoji} className="emoji-option" onClick={() => insertEmoji(emoji)}>{emoji}</button>
+              ))}
+            </div>
+          )}
+        </div>
         <button disabled={!draft.trim() || !connected}>Send</button>
       </form>
     </div>

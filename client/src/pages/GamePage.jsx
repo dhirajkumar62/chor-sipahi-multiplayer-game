@@ -19,6 +19,8 @@ export default function GamePage() {
   const [time, setTime] = useState(60);
   const [error, setError] = useState('');
   const [messages, setMessages] = useState([]);
+  const [selectedTarget, setSelectedTarget] = useState('');
+  const [turnSubmitted, setTurnSubmitted] = useState(false);
   const navigate = useNavigate();
   const socket = connectSocket();
 
@@ -36,7 +38,11 @@ export default function GamePage() {
 
     const onChatHistory = (history) => setMessages((current) => mergeMessages(current, history || []));
     const onChatMessage = (item) => setMessages((current) => mergeMessages(current, [item]));
-    const onRoleAssigned = (item) => setRole(item.role);
+    const onRoleAssigned = (item) => {
+      setRole(item.role);
+      setSelectedTarget('');
+      setTurnSubmitted(false);
+    };
     const onTimerUpdate = (item) => setTime(item.timeLeft);
     const onGameState = (item) => { receivedSocketGame = true; setGame(item.game); };
     const onGameResult = () => navigate('/result/' + gameCode);
@@ -74,9 +80,34 @@ export default function GamePage() {
     };
   }, [gameCode, navigate, socket]);
 
-  const guess = (accusedId) => socket.emit('make_guess', { gameCode, accusedId }, (result) => {
-    if (result?.error) setError(result.error);
-  });
+  const submitGuess = () => {
+    if (!selectedTarget) {
+      setError('Choose a player before submitting your guess.');
+      return;
+    }
+    if (turnSubmitted) {
+      setError('You already submitted this round.');
+      return;
+    }
+    const eventName = role === 'MANTRI' ? 'mantri_guess' : 'make_guess';
+    const payload = role === 'MANTRI' ? { gameCode, suspectId: selectedTarget } : { gameCode, accusedId: selectedTarget };
+    socket.emit(eventName, payload, (result) => {
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+      setError('');
+      setTurnSubmitted(true);
+    });
+  };
+
+  const canGuess = role === 'SIPAHI' || role === 'MANTRI';
+  const actionTitle = role === 'MANTRI' ? 'Who is the CHOR?' : role === 'SIPAHI' ? 'Who is the CHOR?' : 'Stay in character.';
+  const actionDescription = role === 'MANTRI'
+    ? 'The Mantri may identify the suspected Chor. Choose one player and confirm before the timer ends.'
+    : role === 'SIPAHI'
+      ? 'The Sipahi makes the final accusation. Only a valid opponent can be selected.'
+      : 'The round is in progress. Keep your role secret until the result is revealed.';
 
   return <Layout>
     {error && <p className="error" role="alert">{error}</p>}
@@ -84,17 +115,48 @@ export default function GamePage() {
       <p className="muted">YOUR SECRET ROLE</p>
       <div className="role">{role || 'REVEALING…'}</div>
       <div className="timer">00:{String(time).padStart(2, '0')}</div>
-      <p className="muted">The server controls this timer.</p>
+      <p className="muted">The server controls this timer and validates every major decision.</p>
     </section>
     <div className="spacer" />
     <div className="game-layout">
       <section className="card">
-        <h2 className="title">{role === 'SIPAHI' ? 'Who is the CHOR?' : 'Stay in character.'}</h2>
-        <p className="muted">Only Sipahi can make an accusation. Roles stay secret until the result.</p>
-        {game?.players.map((player) => <div className="player" key={player.userId}>
-          <span>👤 {player.name} <small className={player.connected ? 'connection-status connected' : 'connection-status'}>{player.connected ? '● Connected' : '○ Reconnecting'}</small></span>
-          {role === 'SIPAHI' && <button className="secondary" disabled={String(player.userId) === userId} onClick={() => guess(player.userId)}>Accuse</button>}
-        </div>)}
+        <h2 className="title">{actionTitle}</h2>
+        <p className="muted">{actionDescription}</p>
+        {canGuess && !turnSubmitted && (
+          <div className="guess-panel">
+            <div className="guess-grid">
+              {game?.players?.map((player) => {
+                const isSelf = String(player.userId) === String(userId);
+                const isSelected = String(selectedTarget) === String(player.userId);
+                if (isSelf) return null;
+                return <button
+                  key={player.userId}
+                  type="button"
+                  className={`guess-option ${isSelected ? 'selected' : ''}`}
+                  onClick={() => setSelectedTarget(player.userId)}
+                >
+                  <span className="guess-role-label">{player.name}</span>
+                  <small>{isSelected ? 'Selected' : 'Choose'}</small>
+                </button>;
+              })}
+            </div>
+            <div className="guess-actions">
+              <button className="secondary" type="button" onClick={() => setSelectedTarget('')} disabled={!selectedTarget}>Clear selection</button>
+              <button type="button" disabled={!selectedTarget} onClick={submitGuess}>{role === 'MANTRI' ? 'Confirm suspect' : 'Accuse player'}</button>
+            </div>
+          </div>
+        )}
+        {canGuess && turnSubmitted && (
+          <div className="success-state">
+            <p className="muted">Your {role === 'MANTRI' ? 'suspect submission' : 'accusation'} has been locked in. Please wait for the round result.</p>
+          </div>
+        )}
+        {!canGuess && <div className="info-note"><p className="muted">The table is active. The {role === 'RAJA' ? 'Raja' : 'Chor'} must stay hidden while the round resolves.</p></div>}
+        {game?.players?.map((player) => (
+          <div className="player" key={player.userId}>
+            <span>👤 {player.name} <small className={player.connected ? 'connection-status connected' : 'connection-status'}>{player.connected ? '● Connected' : '○ Reconnecting'}</small></span>
+          </div>
+        ))}
       </section>
       <ChatPanel socket={socket} gameCode={gameCode} messages={messages} userId={userId} />
     </div>
