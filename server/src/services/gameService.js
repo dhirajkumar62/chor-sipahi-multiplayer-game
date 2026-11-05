@@ -35,6 +35,21 @@ function resetRoundState(game) {
   game.rematchVotes = [];
 }
 
+function startNewRound(game) {
+  resetRoundState(game);
+  game.status = 'started';
+  game.startedAt = new Date();
+  game.endedAt = null;
+  game.roles = require('../utils/gameUtils').assignRoles(game.players);
+  game.guessMade = false;
+  game.guess = undefined;
+  game.mantriGuess = undefined;
+  game.results = [];
+  game.winner = undefined;
+  game.rematchVotes = [];
+  return game;
+}
+
 async function finishGame(game, accusedId = null, accuserId = null, mantriGuessUserId = null) {
   if (game.status === 'ended' || game.status === 'rematch_waiting') return { results: game.results, winnerId: game.winner, alreadyFinished: true };
   const outcome = calculateScores(game, accusedId, mantriGuessUserId);
@@ -56,4 +71,4 @@ async function finishGame(game, accusedId = null, accuserId = null, mantriGuessU
   return outcome;
 }
 
-module.exports = { publicGame, finishGame, resetRoundState };
+module.exports = { publicGame, finishGame, resetRoundState, startNewRound };

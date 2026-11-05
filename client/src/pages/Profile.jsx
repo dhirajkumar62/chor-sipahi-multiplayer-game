@@ -10,10 +10,24 @@ function formatResult(result = '') {
 export default function Profile() {
   const [user, setUser] = useState();
   const [history, setHistory] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '' });
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const loadProfile = () => {
+    API.get('/auth/me').then((response) => {
+      const currentUser = response.data.user;
+      setUser(currentUser);
+      setForm({ name: currentUser.name || '', email: currentUser.email || '' });
+    }).catch(() => {
+      setUser(null);
+    });
+    API.get('/game/history').then((response) => setHistory(response.data.histories || [])).catch(() => setHistory([]));
+  };
 
   useEffect(() => {
-    API.get('/auth/me').then((response) => setUser(response.data.user));
-    API.get('/game/history').then((response) => setHistory(response.data.histories || [])).catch(() => setHistory([]));
+    loadProfile();
   }, []);
 
   if (!user) return <Layout><div className="card profile-loading">Loading your profile…</div></Layout>;
@@ -26,20 +40,73 @@ export default function Profile() {
   const recentGames = history.slice(0, 4);
   const initial = user.name?.trim()?.charAt(0)?.toUpperCase() || '?';
 
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleEditToggle = () => {
+    setError('');
+    if (isEditing) {
+      setForm({ name: user.name || '', email: user.email || '' });
+    }
+    setIsEditing((current) => !current);
+  };
+
+  const handleSave = async (event) => {
+    event.preventDefault();
+    setError('');
+    setSaving(true);
+
+    try {
+      const response = await API.put('/auth/profile', {
+        name: form.name,
+        email: form.email
+      });
+
+      const nextUser = response.data.user;
+      setUser(nextUser);
+      setForm({ name: nextUser.name || '', email: nextUser.email || '' });
+      setIsEditing(false);
+    } catch (err) {
+      const message = err.response?.data?.message || 'Unable to update profile.';
+      setError(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return <Layout>
     <div className="profile-page">
       <section className="card profile-hero" aria-labelledby="profile-name">
         <div className="profile-avatar" aria-hidden="true">{initial}</div>
         <div className="profile-identity">
           <p className="eyebrow">Player profile</p>
-          <h1 className="title" id="profile-name">{user.name}</h1>
-          <p className="muted">{user.email}</p>
+          {!isEditing ? <h1 className="title" id="profile-name">{user.name}</h1> : <form onSubmit={handleSave} className="profile-edit-form">
+            <label>
+              <span className="sr-only">Player name</span>
+              <input name="name" value={form.name} onChange={handleChange} placeholder="Player name" maxLength="40" required />
+            </label>
+            <label>
+              <span className="sr-only">Email</span>
+              <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="Email address" required />
+            </label>
+          </form>}
+          {!isEditing && <p className="muted">{user.email}</p>}
         </div>
         <div className="profile-member">
           <span>Member since</span>
           <strong>{memberSince ? memberSince.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : '—'}</strong>
+          <button type="button" className="button secondary profile-edit-button" onClick={handleEditToggle}>
+            {isEditing ? 'Cancel' : 'Edit profile'}
+          </button>
+          {isEditing && <button type="button" className="button profile-save-button" onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving…' : 'Save changes'}
+          </button>}
         </div>
       </section>
+
+      {error && <div className="error">{error}</div>}
 
       <section className="profile-stats" aria-label="Player statistics">
         <article className="stat profile-stat"><span>Total points</span><b>{Number(user.points) || 0}</b><small>Your all time score</small></article>

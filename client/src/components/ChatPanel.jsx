@@ -9,6 +9,7 @@ export default function ChatPanel({ socket, gameCode, messages, userId }) {
   const [open, setOpen] = useState(false);
   const [typingUsers, setTypingUsers] = useState([]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [replyTarget, setReplyTarget] = useState(null);
   const listRef = useRef(null);
   const pickerRef = useRef(null);
   const typingRef = useRef(false);
@@ -100,9 +101,16 @@ export default function ChatPanel({ socket, gameCode, messages, userId }) {
     const message = draft.trim();
     if (!message) return;
     stopTyping();
-    socket.emit('chat:send', { gameCode, message }, (result) => {
+    const payload = replyTarget
+      ? { gameCode, message, replyToMessageId: replyTarget.id, replyToUsername: replyTarget.name, replyToMessage: replyTarget.message }
+      : { gameCode, message };
+    socket.emit('chat:send', payload, (result) => {
       if (result?.error) setError(result.error);
-      else { setError(''); setDraft(''); }
+      else {
+        setError('');
+        setDraft('');
+        setReplyTarget(null);
+      }
     });
   };
 
@@ -127,10 +135,21 @@ export default function ChatPanel({ socket, gameCode, messages, userId }) {
     <div className="chat-body">
       <div className="chat-messages" ref={listRef} aria-live="polite" aria-relevant="additions">
         {!messages.length && <p className="chat-empty">No messages yet. Say hello while everyone gets ready.</p>}
-        {messages.map((item) => <article className={`chat-message ${String(item.userId) === String(userId) ? 'mine' : ''}`} key={item.id}>
-          <div className="chat-meta"><strong>{item.name}</strong><time dateTime={item.sentAt}>{new Date(item.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time></div>
-          <p>{item.message}</p>
-        </article>)}
+        {messages.map((item) => {
+          const isMine = String(item.userId) === String(userId);
+          const replyLabel = item.replyToUsername ? `Replying to ${item.replyToUsername}` : null;
+          return <article className={`chat-message ${isMine ? 'mine' : ''} ${item.replyToMessageId ? 'is-reply' : ''}`} key={item.id}>
+            <div className="chat-meta"><strong>{item.name}</strong><time dateTime={item.sentAt}>{new Date(item.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time></div>
+            {item.replyToMessageId && (
+              <button type="button" className="chat-reply-quote" onClick={() => { const target = messages.find((message) => message.id === item.replyToMessageId); if (target) setReplyTarget(target); }}>
+                <span className="chat-reply-label">{replyLabel || 'Reply'}</span>
+                <span className="chat-reply-message">{item.replyToMessage || 'Original message'}</span>
+              </button>
+            )}
+            <p>{item.message}</p>
+            <button className="chat-reply-toggle" type="button" onClick={() => setReplyTarget({ id: item.id, name: item.name, message: item.message })}>Reply</button>
+          </article>;
+        })}
         {!!typingUsers.length && <div className="chat-typing" role="status" aria-live="polite">
           <span className="typing-dots" aria-hidden="true"><i /><i /><i /></span>
           <span>{typingLabel}</span>
@@ -138,9 +157,16 @@ export default function ChatPanel({ socket, gameCode, messages, userId }) {
       </div>
       {!connected && <p className="chat-connection" role="status">Connection lost. Reconnecting to room chat…</p>}
       {error && <p className="error chat-error" role="alert">{error}</p>}
+      {replyTarget && <div className="chat-reply-preview">
+        <div className="chat-reply-header">
+          <span>Replying to {replyTarget.name}</span>
+          <button type="button" className="chat-reply-cancel" onClick={() => setReplyTarget(null)}>Cancel</button>
+        </div>
+        <p>{replyTarget.message}</p>
+      </div>}
       <form className="chat-form" onSubmit={send}>
         <label className="sr-only" htmlFor={`room-chat-input-${gameCode}`}>Type your message</label>
-        <input id={`room-chat-input-${gameCode}`} maxLength={500} value={draft} onChange={(event) => updateDraft(event.target.value)} placeholder="Type your message…" />
+        <input id={`room-chat-input-${gameCode}`} maxLength={500} value={draft} onChange={(event) => updateDraft(event.target.value)} placeholder={replyTarget ? `Replying to ${replyTarget.name}…` : 'Type your message…'} />
         <div className="emoji-wrapper" ref={pickerRef}>
           <button type="button" className="emoji-button" aria-label="Open emoji picker" onClick={() => setPickerOpen((value) => !value)}>😊</button>
           {pickerOpen && (
