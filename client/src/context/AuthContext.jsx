@@ -11,7 +11,8 @@ export function AuthProvider({ children }) {
   const saveSession = ({ token: nextToken, user }) => { localStorage.setItem('token', nextToken); setToken(nextToken); setCurrentUser(user); };
   const login = async (values) => { const { data } = await API.post('/auth/login', values); saveSession(data); return data; };
   const register = async (values) => { const { data } = await API.post('/auth/register', values); saveSession(data); return data; };
+  const loginWithGoogle = async (credential) => { const { data } = await API.post('/auth/google', { credential }); saveSession(data); return data; };
   const logout = () => { getSocket()?.disconnect(); localStorage.removeItem('token'); setToken(null); setCurrentUser(null); };
-  return <AuthContext.Provider value={{ currentUser, token, loading, isAuthenticated: Boolean(token && currentUser), login, register, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ currentUser, token, loading, isAuthenticated: Boolean(token && currentUser), login, register, loginWithGoogle, logout }}>{children}</AuthContext.Provider>;
 }
 export const useAuth = () => useContext(AuthContext);

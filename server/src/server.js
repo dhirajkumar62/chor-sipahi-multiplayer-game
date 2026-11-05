@@ -54,10 +54,28 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
+const startServer = (port = Number(PORT) || 5000) => {
+  server.once('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      const nextPort = port + 1;
+      console.warn(`Port ${port} is already in use. Retrying on port ${nextPort}...`);
+      server.removeAllListeners('error');
+      startServer(nextPort);
+      return;
+    }
+
+    console.error('Server startup failed:', err);
+    process.exit(1);
+  });
+
+  server.listen(port, () => console.log(`Server running on port ${port}; allowed client origins: ${allowedOrigins.join(', ')}`));
+};
+
 if (!process.env.JWT_SECRET) console.warn('WARNING: set JWT_SECRET in server/.env before production use');
 connectDB(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/chor_sipahi')
   .then(() => {
-    server.listen(PORT, () => console.log(`Server running on port ${PORT}; allowed client origins: ${allowedOrigins.join(', ')}`));
+    startServer();
   })
   .catch((err) => {
     console.error('Server startup failed:', err);
